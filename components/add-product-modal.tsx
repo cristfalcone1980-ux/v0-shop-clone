@@ -37,14 +37,6 @@ export default function AddProductModal({
     setError('')
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        throw new Error('Usuario no autenticado')
-      }
-
       if (!name.trim() || !price.trim()) {
         throw new Error('Nombre y Precio son requeridos')
       }
@@ -54,28 +46,23 @@ export default function AddProductModal({
         throw new Error('Precio debe ser un número válido')
       }
 
-      console.log('[v0] Inserting product:', {
-        name,
-        price: priceNum,
-        user_id: user.id,
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name.trim(),
+          description: description.trim(),
+          price: priceNum,
+          image_url: imageUrl.trim(),
+          amazon_affiliate_link: affiliateLink.trim(),
+        }),
       })
 
-      const { data: insertData, error: insertError } = await supabase
-        .from('products')
-        .insert([{
-          name: name.trim(),
-          description: description.trim() || null,
-          price: priceNum,
-          currency: 'EUR',
-          image_url: imageUrl.trim() || null,
-          amazon_affiliate_link: affiliateLink.trim() || null,
-          user_id: user.id,
-        }])
-
-      console.log('[v0] Insert response:', { data: insertData, error: insertError })
-
-      if (insertError) {
-        throw insertError
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al agregar producto')
       }
 
       // Clear form
@@ -90,7 +77,6 @@ export default function AddProductModal({
       onClose()
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
-      console.error('[v0] Error:', errorMsg)
       setError(errorMsg)
     } finally {
       setLoading(false)

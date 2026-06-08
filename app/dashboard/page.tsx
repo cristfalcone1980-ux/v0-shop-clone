@@ -36,18 +36,14 @@ export default function DashboardPage() {
   }, [router, supabase])
 
   const loadProducts = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (user) {
-      const { data } = await supabase
-        .from('products')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      setProducts(data || [])
+    try {
+      const response = await fetch('/api/products')
+      if (response.ok) {
+        const { data } = await response.json()
+        setProducts(data || [])
+      }
+    } catch (err) {
+      console.error('Error loading products:', err)
     }
   }
 
