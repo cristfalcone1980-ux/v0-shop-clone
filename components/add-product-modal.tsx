@@ -41,33 +41,57 @@ export default function AddProductModal({
         data: { user },
       } = await supabase.auth.getUser()
 
-      if (!user) throw new Error('No authenticated')
+      if (!user) {
+        throw new Error('Usuario no autenticado')
+      }
 
-      const { error: insertError } = await supabase
+      if (!name.trim() || !price.trim()) {
+        throw new Error('Nombre y Precio son requeridos')
+      }
+
+      const priceNum = parseFloat(price)
+      if (isNaN(priceNum) || priceNum < 0) {
+        throw new Error('Precio debe ser un número válido')
+      }
+
+      console.log('[v0] Inserting product:', {
+        name,
+        price: priceNum,
+        user_id: user.id,
+      })
+
+      const { data: insertData, error: insertError } = await supabase
         .from('products')
-        .insert([{
-          name,
-          description,
-          price: parseFloat(price),
+        .insert({
+          name: name.trim(),
+          description: description.trim() || null,
+          price: priceNum,
           currency: 'EUR',
-          image_url: imageUrl,
-          amazon_affiliate_link: affiliateLink,
+          image_url: imageUrl.trim() || null,
+          amazon_affiliate_link: affiliateLink.trim() || null,
           user_id: user.id,
-        }])
+        })
+        .select()
+
+      console.log('[v0] Insert response:', { data: insertData, error: insertError })
 
       if (insertError) {
         throw insertError
       }
 
+      // Clear form
       setName('')
       setDescription('')
       setPrice('')
       setImageUrl('')
       setAffiliateLink('')
+      
+      // Refresh and close
       onProductAdded()
       onClose()
     } catch (err) {
-      const errorMsg = err.message || 'Error al agregar producto'
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido'
+      console.error('[v0] Error:', errorMsg)
       setError(errorMsg)
     } finally {
       setLoading(false)
