@@ -43,9 +43,6 @@ export default function AddProductModal({
 
       if (!user) throw new Error('No authenticated')
 
-      console.log('[v0] User ID:', user.id)
-      console.log('[v0] Product data:', { name, price: parseFloat(price), imageUrl, affiliateLink })
-
       const { error: insertError } = await supabase
         .from('products')
         .insert([{
@@ -59,11 +56,9 @@ export default function AddProductModal({
         }])
 
       if (insertError) {
-        console.log('[v0] Insert error:', insertError)
         throw insertError
       }
 
-      console.log('[v0] Product added successfully')
       setName('')
       setDescription('')
       setPrice('')
@@ -73,9 +68,7 @@ export default function AddProductModal({
       onClose()
     } catch (err) {
       const errorMsg = err.message || 'Error al agregar producto'
-      console.log('[v0] Catch error:', errorMsg)
       setError(errorMsg)
-      alert('Error: ' + errorMsg)
     } finally {
       setLoading(false)
     }
@@ -138,7 +131,7 @@ export default function AddProductModal({
 
       const { error: insertError } = await supabase
         .from('products')
-        .insert({
+        .insert([{
           name: result.title,
           price: parseFloat(result.price),
           currency: 'EUR',
@@ -146,7 +139,7 @@ export default function AddProductModal({
           amazon_asin: result.asin,
           amazon_affiliate_link: affiliateLink,
           user_id: user.id,
-        })
+        }])
 
       if (insertError) throw insertError
 
