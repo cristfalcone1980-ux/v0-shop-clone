@@ -72,7 +72,10 @@ export default function AddProductModal({
       onProductAdded()
       onClose()
     } catch (err) {
-      setError(err.message || 'Error al agregar producto')
+      const errorMsg = err.message || 'Error al agregar producto'
+      console.log('[v0] Catch error:', errorMsg)
+      setError(errorMsg)
+      alert('Error: ' + errorMsg)
     } finally {
       setLoading(false)
     }
