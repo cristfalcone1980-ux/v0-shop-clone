@@ -71,7 +71,6 @@ export default function AddProductModal({
           amazon_affiliate_link: affiliateLink.trim() || null,
           user_id: user.id,
         }])
-        .select()
 
       console.log('[v0] Insert response:', { data: insertData, error: insertError })
 
