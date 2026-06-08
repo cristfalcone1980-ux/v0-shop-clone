@@ -62,7 +62,7 @@ export default function AddProductModal({
 
       const { data: insertData, error: insertError } = await supabase
         .from('products')
-        .insert({
+        .insert([{
           name: name.trim(),
           description: description.trim() || null,
           price: priceNum,
@@ -70,7 +70,7 @@ export default function AddProductModal({
           image_url: imageUrl.trim() || null,
           amazon_affiliate_link: affiliateLink.trim() || null,
           user_id: user.id,
-        })
+        }])
         .select()
 
       console.log('[v0] Insert response:', { data: insertData, error: insertError })
