@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import CheckoutPage from '@/components/checkout-page'
 
 interface Product {
   id: string
@@ -14,11 +15,17 @@ interface Product {
   product_type: string
 }
 
+interface CartItem {
+  product: Product
+  quantity: number
+}
+
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
-  const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([])
+  const [cart, setCart] = useState<CartItem[]>([])
   const [showCart, setShowCart] = useState(false)
+  const [showCheckout, setShowCheckout] = useState(false)
   const [search, setSearch] = useState('')
 
   const supabase = createClient()
@@ -68,6 +75,18 @@ export default function HomePage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
+  if (showCheckout) {
+    return (
+      <CheckoutPage
+        cart={cart}
+        onOrderComplete={() => {
+          setCart([])
+          setShowCheckout(false)
+        }}
+      />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
 
@@ -89,7 +108,6 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Carrito solo para productos propios */}
             <button
               onClick={() => setShowCart(!showCart)}
               className="relative flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition text-sm"
@@ -171,25 +189,16 @@ export default function HomePage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-4xl text-white/20">
-                        📦
-                      </div>
+                      <div className="w-full h-full flex items-center justify-center text-4xl text-white/20">📦</div>
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">
-                      {product.name}
-                    </h3>
+                    <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">{product.name}</h3>
                     {product.description && (
-                      <p className="text-white/40 text-xs mb-3 line-clamp-2">
-                        {product.description}
-                      </p>
+                      <p className="text-white/40 text-xs mb-3 line-clamp-2">{product.description}</p>
                     )}
-                    <p className="text-[#f97316] font-bold text-lg mb-3">
-                      {product.price?.toFixed(2)}€
-                    </p>
+                    <p className="text-[#f97316] font-bold text-lg mb-3">{product.price?.toFixed(2)}€</p>
 
-                    {/* Botón según tipo de producto */}
                     {product.product_type === 'propio' ? (
                       <button
                         onClick={() => addToCart(product)}
@@ -198,11 +207,7 @@ export default function HomePage() {
                         🛒 Comprar
                       </button>
                     ) : (
-                      <a
-                        href={product.amazon_affiliate_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={product.amazon_affiliate_link} target="_blank" rel="noopener noreferrer">
                         <button className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium transition">
                           + Información
                         </button>
@@ -227,7 +232,7 @@ export default function HomePage() {
         </div>
       </footer>
 
-      {/* CARRITO - solo para productos propios */}
+      {/* CARRITO */}
       {showCart && (
         <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-[#111] border-l border-white/10 shadow-2xl z-50 overflow-y-auto">
           <div className="sticky top-0 bg-[#111] border-b border-white/10 px-6 py-4 flex items-center justify-between">
@@ -259,8 +264,11 @@ export default function HomePage() {
                     <span className="font-semibold">Total:</span>
                     <span className="text-2xl font-bold text-[#f97316]">{cartTotal.toFixed(2)}€</span>
                   </div>
-                  <button className="w-full py-3 bg-[#f97316] hover:bg-[#ea6c0a] rounded-xl font-semibold transition">
-                    Finalizar compra
+                  <button
+                    onClick={() => { setShowCart(false); setShowCheckout(true) }}
+                    className="w-full py-3 bg-[#f97316] hover:bg-[#ea6c0a] rounded-xl font-semibold transition"
+                  >
+                    Finalizar compra →
                   </button>
                 </div>
               </div>
