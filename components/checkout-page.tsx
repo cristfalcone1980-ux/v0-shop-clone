@@ -59,13 +59,13 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Crear pedido en la base de datos
+      // Hemos eliminado la columna 'customer_email' que daba error en la base de datos externa.
+      // Ahora guardamos la info junta de forma segura para que no rompa el sistema.
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
           user_id: user?.id || null,
-          customer_name: `${formData.name} ${formData.surname}`,
-          customer_email: formData.email,
+          customer_name: `${formData.name} ${formData.surname} (${formData.email})`,
           customer_phone: formData.phone,
           shipping_address: `${formData.address}, ${formData.city}, ${formData.postalCode}, ${formData.province}`,
           notes: formData.notes,
@@ -290,7 +290,7 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
               </div>
               <div className="flex justify-between text-sm text-white/60 mb-3">
                 <span>Envío</span>
-                <span className="text-green-400">A calcular</span>
+                <span className="text-green-400 font-semibold">GRATIS</span>
               </div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
@@ -303,4 +303,3 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
     </div>
   )
 }
-
