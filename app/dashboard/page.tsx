@@ -7,12 +7,14 @@ import { Button } from '@/components/ui/button'
 import AddProductModal from '@/components/add-product-modal'
 import ProductsList from '@/components/products-list'
 import AffiliateSettings from '@/components/affiliate-settings'
+import PaymentSettings from '@/components/payment-settings'
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [showAddProduct, setShowAddProduct] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showPayments, setShowPayments] = useState(false)
   const [products, setProducts] = useState([])
   const router = useRouter()
   const supabase = createClient()
@@ -63,6 +65,13 @@ export default function DashboardPage() {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Dropbay Admin</h1>
           <div className="flex gap-2">
+            {/* NUEVO: Botón métodos de pago */}
+            <Button
+              variant="outline"
+              onClick={() => setShowPayments(true)}
+            >
+              💳 Pagos
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowSettings(true)}
@@ -110,6 +119,13 @@ export default function DashboardPage() {
       {showSettings && (
         <AffiliateSettings
           onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* NUEVO: Modal métodos de pago */}
+      {showPayments && (
+        <PaymentSettings
+          onClose={() => setShowPayments(false)}
         />
       )}
     </div>
