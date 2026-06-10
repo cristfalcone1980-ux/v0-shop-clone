@@ -1,34 +1,101 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * Especially important if using Fluid compute: Don't put this client in a
- * global variable. Always create a new client within each function when using
- * it.
- */
-export async function createClient() {
-  const cookieStore = await cookies()
+export async function POST(request: NextRequest) {
+  try {
+    // FIX: createClient() es async, hay que usar await
+    const supabase = await createClient()
 
-  return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const { name, description, price, image_url, amazon_affiliate_link } = body
+
+    if (!name || price === undefined) {
+      return NextResponse.json(
+        { error: 'Name and price are required' },
+        { status: 400 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([
+        {
+          name,
+          description: description || null,
+          price: parseFloat(price),
+          currency: 'EUR',
+          image_url: image_url || null,
+          amazon_affiliate_link: amazon_affiliate_link || null,
+          user_id: user.id,
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options),
-            )
-          } catch {
-            // The "setAll" method was called from a Server Component.
-            // This can be ignored if you have proxy refreshing
-            // user sessions.
-          }
-        },
-      },
-    },
-  )
+      ])
+      .select()
+
+    if (error) {
+      console.error('[v0] Insert error:', error)
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json({ data })
+  } catch (err) {
+    console.error('[v0] API error:', err)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
 }
+
+export async function GET(request: NextRequest) {
+  try {
+    // FIX: createClient() es async, hay que usar await
+    const supabase = await createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json({ data })
+  } catch (err) {
+    console.error('[v0] API error:', err)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
