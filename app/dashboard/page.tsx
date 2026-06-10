@@ -10,21 +10,18 @@ import AffiliateSettings from '@/components/affiliate-settings'
 import PaymentSettings from '@/components/payment-settings'
 
 export default function DashboardPage() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [showAddProduct, setShowAddProduct] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showPayments, setShowPayments] = useState(false)
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState<any[]>([])
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
     const checkUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
+      const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/auth/login')
       } else {
@@ -33,9 +30,8 @@ export default function DashboardPage() {
       }
       setLoading(false)
     }
-
     checkUser()
-  }, [router, supabase])
+  }, [])
 
   const loadProducts = async () => {
     try {
@@ -60,74 +56,29 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="bg-card border-b border-border sticky top-0">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-foreground">Dropbay Admin</h1>
           <div className="flex gap-2">
-            {/* NUEVO: Botón métodos de pago */}
-            <Button
-              variant="outline"
-              onClick={() => setShowPayments(true)}
-            >
-              💳 Pagos
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowSettings(true)}
-            >
-              Configuración
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleLogout}
-            >
-              Cerrar sesión
-            </Button>
+            <Button variant="outline" onClick={() => setShowPayments(true)}>💳 Pagos</Button>
+            <Button variant="outline" onClick={() => setShowSettings(true)}>Configuración</Button>
+            <Button variant="outline" onClick={handleLogout}>Cerrar sesión</Button>
           </div>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Mis productos</h2>
-            <p className="text-muted-foreground text-sm mt-1">
-              {products.length} producto{products.length !== 1 ? 's' : ''}
-            </p>
+            <p className="text-muted-foreground text-sm mt-1">{products.length} producto{products.length !== 1 ? 's' : ''}</p>
           </div>
-          <Button onClick={() => setShowAddProduct(true)}>
-            + Agregar producto
-          </Button>
+          <Button onClick={() => setShowAddProduct(true)}>+ Agregar producto</Button>
         </div>
-
-        <ProductsList
-          products={products}
-          onProductsChange={loadProducts}
-        />
+        <ProductsList products={products} onProductsChange={loadProducts} />
       </main>
-
-      {/* Modals */}
-      {showAddProduct && (
-        <AddProductModal
-          onClose={() => setShowAddProduct(false)}
-          onProductAdded={loadProducts}
-        />
-      )}
-
-      {showSettings && (
-        <AffiliateSettings
-          onClose={() => setShowSettings(false)}
-        />
-      )}
-
-      {/* NUEVO: Modal métodos de pago */}
-      {showPayments && (
-        <PaymentSettings
-          onClose={() => setShowPayments(false)}
-        />
-      )}
+      {showAddProduct && <AddProductModal onClose={() => setShowAddProduct(false)} onProductAdded={loadProducts} />}
+      {showSettings && <AffiliateSettings onClose={() => setShowSettings(false)} />}
+      {showPayments && <PaymentSettings onClose={() => setShowPayments(false)} />}
     </div>
   )
 }
