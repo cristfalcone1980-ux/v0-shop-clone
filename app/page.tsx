@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 interface Product {
@@ -12,6 +11,7 @@ interface Product {
   price: number
   image_url: string
   amazon_affiliate_link: string
+  product_type: string
 }
 
 export default function HomePage() {
@@ -78,7 +78,6 @@ export default function HomePage() {
             Drop<span className="text-[#f97316]">bay</span>
           </Link>
 
-          {/* Buscador */}
           <div className="flex-1 max-w-md hidden md:block">
             <input
               type="text"
@@ -90,6 +89,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Carrito solo para productos propios */}
             <button
               onClick={() => setShowCart(!showCart)}
               className="relative flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition text-sm"
@@ -114,7 +114,6 @@ export default function HomePage() {
       <section className="pt-24 pb-16 px-4 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#f97316]/20 via-transparent to-transparent pointer-events-none" />
         <div className="absolute top-20 right-0 w-96 h-96 bg-[#f97316]/10 rounded-full blur-3xl pointer-events-none" />
-        
         <div className="max-w-6xl mx-auto relative">
           <div className="max-w-2xl">
             <span className="inline-block px-3 py-1 bg-[#f97316]/20 text-[#f97316] text-xs font-semibold rounded-full mb-4 tracking-wider uppercase">
@@ -125,32 +124,8 @@ export default function HomePage() {
               <span className="text-[#f97316]">al mejor precio</span>
             </h1>
             <p className="text-white/60 text-lg mb-8 leading-relaxed">
-              Descubre nuestra selección de tecnología, gadgets y mucho más. 
-              Envío directo desde Amazon con garantía.
+              Descubre nuestra selección de tecnología, gadgets y mucho más.
             </p>
-            <div className="flex gap-3">
-              <a href="#productos">
-                <button className="px-6 py-3 bg-[#f97316] hover:bg-[#ea6c0a] text-white font-semibold rounded-full transition">
-                  Ver productos
-                </button>
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CATEGORÍAS */}
-      <section className="py-8 px-4 border-y border-white/10">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-            {['Todo', 'Móviles', 'Audio', 'Informática', 'Hogar', 'Accesorios', 'Ofertas'].map((cat) => (
-              <button
-                key={cat}
-                className="flex-shrink-0 px-4 py-2 rounded-full border border-white/20 text-sm text-white/70 hover:border-[#f97316] hover:text-[#f97316] transition"
-              >
-                {cat}
-              </button>
-            ))}
           </div>
         </div>
       </section>
@@ -170,9 +145,7 @@ export default function HomePage() {
       <section id="productos" className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold">
-              {search ? `Resultados para "${search}"` : 'Productos destacados'}
-            </h2>
+            <h2 className="text-2xl font-bold">Productos destacados</h2>
             <span className="text-white/40 text-sm">{filteredProducts.length} productos</span>
           </div>
 
@@ -188,7 +161,7 @@ export default function HomePage() {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-[#f97316]/50 hover:bg-white/8 transition-all duration-300"
+                  className="group bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:border-[#f97316]/50 transition-all duration-300"
                 >
                   <div className="relative overflow-hidden aspect-square bg-white/5">
                     {product.image_url ? (
@@ -196,9 +169,6 @@ export default function HomePage() {
                         src={product.image_url}
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = ''
-                        }}
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl text-white/20">
@@ -207,7 +177,7 @@ export default function HomePage() {
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2 leading-snug">
+                    <h3 className="font-semibold text-white text-sm mb-1 line-clamp-2">
                       {product.name}
                     </h3>
                     {product.description && (
@@ -215,31 +185,29 @@ export default function HomePage() {
                         {product.description}
                       </p>
                     )}
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-[#f97316] font-bold text-lg">
-                        {product.price?.toFixed(2)}€
-                      </span>
-                    </div>
-                    <div className="flex gap-2 mt-3">
+                    <p className="text-[#f97316] font-bold text-lg mb-3">
+                      {product.price?.toFixed(2)}€
+                    </p>
+
+                    {/* Botón según tipo de producto */}
+                    {product.product_type === 'propio' ? (
                       <button
                         onClick={() => addToCart(product)}
-                        className="flex-1 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium transition"
+                        className="w-full py-2 rounded-xl bg-[#f97316] hover:bg-[#ea6c0a] text-sm font-semibold transition"
                       >
-                        + Carrito
+                        🛒 Comprar
                       </button>
-                      {product.amazon_affiliate_link && (
-                        <a
-                          href={product.amazon_affiliate_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1"
-                        >
-                          <button className="w-full py-2 rounded-xl bg-[#f97316] hover:bg-[#ea6c0a] text-sm font-semibold transition">
-                            Amazon
-                          </button>
-                        </a>
-                      )}
-                    </div>
+                    ) : (
+                      <a
+                        href={product.amazon_affiliate_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <button className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/20 text-sm font-medium transition">
+                          + Información
+                        </button>
+                      </a>
+                    )}
                   </div>
                 </div>
               ))}
@@ -255,13 +223,11 @@ export default function HomePage() {
             <p className="text-2xl font-bold">Drop<span className="text-[#f97316]">bay</span></p>
             <p className="text-white/40 text-sm mt-1">Tecnología y más al mejor precio</p>
           </div>
-          <p className="text-white/30 text-xs">
-            © 2025 Dropbay. Afiliado de Amazon.
-          </p>
+          <p className="text-white/30 text-xs">© 2025 Dropbay. Afiliado de Amazon.</p>
         </div>
       </footer>
 
-      {/* CARRITO */}
+      {/* CARRITO - solo para productos propios */}
       {showCart && (
         <div className="fixed right-0 top-0 h-full w-full max-w-sm bg-[#111] border-l border-white/10 shadow-2xl z-50 overflow-y-auto">
           <div className="sticky top-0 bg-[#111] border-b border-white/10 px-6 py-4 flex items-center justify-between">
