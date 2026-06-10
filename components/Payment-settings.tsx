@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 
 interface PaymentMethod {
   id: string
-  type: 'paypal' | 'bizum' | 'bank_transfer' | 'stripe'
+  type: 'paypal' | 'bizum' | 'bank_transfer' | 'simup'
   label: string
   value: string
   enabled: boolean
@@ -39,11 +39,11 @@ const PAYMENT_TYPES = [
     description: 'IBAN de tu cuenta bancaria',
   },
   {
-    type: 'stripe' as const,
-    label: 'Stripe',
-    placeholder: 'pk_live_...',
-    icon: '⚡',
-    description: 'Clave pública de Stripe',
+    type: 'simup' as const,
+    label: 'Simup',
+    placeholder: 'Tu API Key de Simup',
+    icon: '💰',
+    description: 'Pago con tarjeta mediante Simup',
   },
 ]
 
@@ -74,7 +74,6 @@ export default function PaymentSettings({ onClose }: PaymentSettingsProps) {
       if (data && data.length > 0) {
         setMethods(data)
       } else {
-        // Inicializar con métodos vacíos
         setMethods(
           PAYMENT_TYPES.map((pt) => ({
             id: pt.type,
@@ -86,7 +85,6 @@ export default function PaymentSettings({ onClose }: PaymentSettingsProps) {
         )
       }
     } catch (err) {
-      // Tabla puede no existir aún, inicializar vacío
       setMethods(
         PAYMENT_TYPES.map((pt) => ({
           id: pt.type,
@@ -117,7 +115,6 @@ export default function PaymentSettings({ onClose }: PaymentSettingsProps) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('No autenticado')
 
-      // Guardar cada método activo
       for (const method of methods) {
         if (method.enabled && !method.value.trim()) {
           throw new Error(`Completa el valor de ${method.label} o desactívalo`)
@@ -156,14 +153,12 @@ export default function PaymentSettings({ onClose }: PaymentSettingsProps) {
       <div className="bg-card rounded-lg shadow-lg max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">Métodos de pago</h2>
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
-            ✕
-          </button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">✕</button>
         </div>
 
         <form onSubmit={handleSave} className="p-6 space-y-5">
           <p className="text-sm text-muted-foreground">
-            Activa los métodos de pago que quieres ofrecer en tu tienda. Solo se muestran los activados.
+            Activa los métodos de pago que quieres ofrecer en tu tienda.
           </p>
 
           {PAYMENT_TYPES.map((pt) => {
@@ -185,7 +180,6 @@ export default function PaymentSettings({ onClose }: PaymentSettingsProps) {
                       <p className="text-xs text-muted-foreground">{pt.description}</p>
                     </div>
                   </div>
-                  {/* Toggle */}
                   <button
                     type="button"
                     onClick={() => updateMethod(pt.type, 'enabled', !method.enabled)}
