@@ -29,10 +29,18 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
       {/* Image Container */}
-      <div className="relative h-48 bg-gray-200">
-        <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-gray-400 font-semibold">
-          {product.name}
-        </div>
+      <div className="relative h-48 bg-gray-200 overflow-hidden">
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center text-gray-400 font-semibold">
+            {product.name}
+          </div>
+        )}
       </div>
 
       {/* Content */}
