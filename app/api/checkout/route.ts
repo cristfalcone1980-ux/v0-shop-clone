@@ -2,83 +2,71 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+const SIMUP_SECRET_KEY = process.env.SIMUP_SECRET_KEY; // Tu sk_live_... de Simup en Vercel
 
 export async function POST(request: NextRequest) {
   try {
     const orderData = await request.json();
+    const total = orderData?.total !== undefined ? Number(orderData.total) : 100.00;
+    const orderId = 'DROP-' + Math.floor(1000 + Math.random() * 9000);
 
-    // 1. Validar que tenemos las credenciales de Telegram que vimos en tus fotos
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-      console.error('Telegram no está configurado en las variables de Vercel');
-      return NextResponse.json(
-        { error: 'Telegram no está configurado' },
-        { status: 500 }
-      );
-    }
+    let checkoutUrl = '';
 
-    // 2. Construir el mensaje de forma segura (añadiendo salvavidas por si faltan campos)
-    const orderId = orderData.orderId || orderData.id || 'N/A';
-    const total = orderData.total !== undefined ? Number(orderData.total).toFixed(2) : '0.00';
-    const timestamp = orderData.timestamp ? new Date(orderData.timestamp).toLocaleString('es-ES') : new Date().toLocaleString('es-ES');
+    // 1. LLAMAMOS A SIMUP PARA CREAR EL LINK DE LA TARJETA
+    if (SIMUP_SECRET_KEY) {
+      try {
+        const response = await fetch('https://api.simup.com/v1/checkouts', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SIMUP_SECRET_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            amount: total,
+            currency: 'EUR',
+            success_url: `${request.nextUrl.origin}/success`,
+            cancel_url: `${request.nextUrl.origin}/`,
+          }),
+        });
 
-    let message = '🛍️ <b>¡NUEVA COMPRA!</b>\n\n';
-    message += `📋 <b>ID Orden:</b> ${orderId}\n`;
-    message += `📅 <b>Hora:</b> ${timestamp}\n\n`;
-
-    message += '<b>Productos:</b>\n';
-    
-    if (orderData.items && Array.isArray(orderData.items)) {
-      orderData.items.forEach((item: any, index: number) => {
-        const pName = item.productName || 'Producto';
-        const pQty = item.quantity || 1;
-        const pPrice = item.price !== undefined ? Number(item.price).toFixed(2) : '0.00';
-        const pSub = item.subtotal !== undefined ? Number(item.subtotal).toFixed(2) : '0.00';
-
-        message += `${index + 1}. ${pName}\n`;
-        message += `   Cantidad: ${pQty} x $${pPrice}\n`;
-        message += `   Subtotal: $${pSub}\n\n`;
-      });
-    } else {
-      message += '• Detalles de los artículos no disponibles.\n\n';
-    }
-
-    message += `<b>💰 Total: $${total}</b>\n`;
-    message += `\n✅ Estado: Procesado correctamente`;
-
-    // 3. Enviar mensaje a Telegram de forma aislada
-    const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-    
-    try {
-      const response = await fetch(telegramUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: message,
-          parse_mode: 'HTML',
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Error directo de la API de Telegram:', errorText);
+        if (response.ok) {
+          const data = await response.json();
+          // Extraemos la URL que nos da Simup para que el cliente pague
+          checkoutUrl = data.url || data.checkout_url || '';
+        }
+      } catch (payError) {
+        console.error('Error con Simup:', payError);
       }
-    } catch (telegramError) {
-      // Si Telegram falla por red o restricción, el checkout NO se congela
-      console.error('Fallo de red al conectar con Telegram:', telegramError);
     }
 
-    // 4. Responder SIEMPRE con un 200 a la web para que nunca se quede congelada
-    return NextResponse.json(
-      { success: true, message: 'Checkout finalizado' },
-      { status: 200 }
-    );
+    // 2. ENVIAMOS NOTIFICACIÓN A TELEGRAM
+    if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      let message = '🛍️ <b>¡NUEVO INTENTO DE COMPRA!</b>\n\n';
+      message += `📋 <b>Orden:</b> ${orderId}\n`;
+      message += `💰 <b>Total:</b> ${total.toFixed(2)}€\n`;
+      message += `💳 <b>Pasarela:</b> Redirigiendo a Tarjeta\n`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: message,
+            parse_mode: 'HTML',
+          }),
+        });
+      } catch (tgErr) {
+        console.error('Telegram falló:', tgErr);
+      }
+    }
+
+    // 3. DEVOLVEMOS LA URL EN LA RESPUESTA
+    return NextResponse.json({ success: true, url: checkoutUrl }, { status: 200 });
 
   } catch (error) {
-    console.error('Error crítico en la lectura de datos del checkout:', error);
-    return NextResponse.json(
-      { error: 'Error interno al procesar los datos de la compra' },
-      { status: 500 }
-    );
+    console.error('Error crítico:', error);
+    return NextResponse.json({ success: false }, { status: 500 });
   }
 }
