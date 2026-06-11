@@ -42,6 +42,36 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
   const total = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
   const supabase = createClient()
 
+  // Función interna para disparar la alerta a Telegram de manera directa y segura
+  const enviarNotificacionTelegram = async (orderId: string) => {
+    try {
+      const botToken = '8949940366:AAEyUdsLDxrsB-hVmBUD5Zb8BV1Y5L1AB24'
+      const chatId = '7151205555'
+      
+      const mensaje = `🔔 ¡NUEVO PEDIDO RECIBIDO! 🚀\n\n` +
+                      `💰 Total: ${total.toFixed(2)} EUR\n` +
+                      `💳 Método: ${paymentMethod.toUpperCase()}\n` +
+                      `📦 ID Pedido: ${orderId}\n\n` +
+                      `👤 Cliente: ${formData.name} ${formData.surname}\n` +
+                      `📧 Email: ${formData.email}\n` +
+                      `📞 Telf: ${formData.phone || 'No indicado'}\n` +
+                      `📍 Dirección: ${formData.address}, ${formData.city} (${formData.postalCode})`
+
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: mensaje,
+        }),
+      })
+    } catch (e) {
+      console.error('Error enviando notificación a Telegram:', e)
+    }
+  }
+
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.postalCode) {
@@ -59,8 +89,6 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
     try {
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Hemos eliminado la columna 'customer_email' que daba error en la base de datos externa.
-      // Ahora guardamos la info junta de forma segura para que no rompa el sistema.
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -87,6 +115,9 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
       }))
 
       await supabase.from('order_items').insert(orderItems)
+
+      // ¡ALERTA LANZADA DESDE LA WEB! Sin depender de servidores externos de SQL
+      await enviarNotificacionTelegram(order.id)
 
       setStep('success')
       onOrderComplete()
@@ -127,10 +158,7 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-
-        {/* Formulario / Pago */}
         <div>
-          {/* Pasos */}
           <div className="flex items-center gap-3 mb-6">
             <div className={`flex items-center gap-2 text-sm font-medium ${step === 'form' ? 'text-[#f97316]' : 'text-white/40'}`}>
               <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step === 'form' ? 'bg-[#f97316]' : 'bg-white/20'}`}>1</span>
@@ -266,7 +294,6 @@ export default function CheckoutPage({ cart, onOrderComplete }: CheckoutPageProp
           )}
         </div>
 
-        {/* Resumen del pedido */}
         <div>
           <h2 className="text-xl font-bold mb-4">Resumen del pedido</h2>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
