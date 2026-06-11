@@ -14,6 +14,7 @@ interface Product {
   price: number;
   category: string;
   rating: number;
+  type?: 'own' | 'dropshipping';
 }
 
 interface CartSidebarProps {
@@ -33,6 +34,7 @@ export default function CartSidebar({
 }: CartSidebarProps) {
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const productMap = new Map(products.map((p) => [p.id, p]));
 
   const total = items.reduce((sum, item) => {
@@ -44,6 +46,7 @@ export default function CartSidebar({
     if (items.length === 0) return;
 
     setLoading(true);
+    setError(null);
     try {
       const orderData = {
         items: items.map((item) => ({
@@ -52,6 +55,7 @@ export default function CartSidebar({
           quantity: item.quantity,
           price: productMap.get(item.id)?.price,
           subtotal: (productMap.get(item.id)?.price || 0) * item.quantity,
+          type: productMap.get(item.id)?.type || 'own',
         })),
         total: total,
         timestamp: new Date().toISOString(),
@@ -63,6 +67,8 @@ export default function CartSidebar({
         body: JSON.stringify(orderData),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         setOrderSuccess(true);
         // Limpiar carrito después de 3 segundos
@@ -71,9 +77,12 @@ export default function CartSidebar({
           setOrderSuccess(false);
           onClose();
         }, 3000);
+      } else {
+        setError(data.error || 'Error al procesar la compra');
       }
     } catch (error) {
       console.error('Error al procesar la compra:', error);
+      setError('Error de conexión al procesar la compra');
     } finally {
       setLoading(false);
     }
@@ -94,6 +103,12 @@ export default function CartSidebar({
       {orderSuccess && (
         <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
           ✅ ¡Compra realizada exitosamente! Te enviaremos los detalles por Telegram.
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+          ❌ {error}
         </div>
       )}
 
@@ -118,7 +133,7 @@ export default function CartSidebar({
                 <div key={item.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
                   <div className="flex-1">
                     <p className="font-semibold text-gray-900">{product.name}</p>
-                    <p className="text-gray-600">${product.price} x {item.quantity}</p>
+                    <p className="text-gray-600">€{product.price} x {item.quantity}</p>
                   </div>
 
                   <div className="flex items-center space-x-3 mr-4">
@@ -152,7 +167,7 @@ export default function CartSidebar({
           <div className="border-t pt-4 mb-6">
             <div className="flex items-center justify-between mb-4">
               <span className="text-lg font-semibold text-gray-900">Total:</span>
-              <span className="text-2xl font-bold text-blue-600">${total.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-blue-600">€{total.toFixed(2)}</span>
             </div>
           </div>
 
