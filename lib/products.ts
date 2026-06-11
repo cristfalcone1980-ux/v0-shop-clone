@@ -17,6 +17,7 @@ export const products: Product[] = [
     category: 'Wearables',
     rating: 5,
     type: 'own',
+    image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&h=500&fit=crop',
   },
   {
     id: 2,
@@ -26,5 +27,6 @@ export const products: Product[] = [
     rating: 5,
     type: 'dropshipping',
     affiliateLink: 'https://amazon.com',
+    image: 'https://images.unsplash.com/photo-1511707267537-b85faf00021e?w=500&h=500&fit=crop',
   },
 ];
