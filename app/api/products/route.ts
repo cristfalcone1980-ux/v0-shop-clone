@@ -1,6 +1,28 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Función interna para enviar la notificación a Telegram
+async function sendTelegramNotification(name: string, price: string | number) {
+  const BOT_TOKEN = "TU_TOKEN_AQUÍ" // Reemplaza con tu token real
+  const CHAT_ID = "TU_CHAT_ID_AQUÍ"   // Reemplaza con tu ID de chat real
+  
+  const message = `🚀 *¡Nuevo producto creado!*\n\n📦 *Nombre:* ${name}\n💰 *Precio:* ${price}€`;
+
+  try {
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: CHAT_ID,
+        text: message,
+        parse_mode: 'Markdown'
+      })
+    });
+  } catch (error) {
+    console.error("Error enviando notificación a Telegram:", error);
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -48,6 +70,11 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // 🔥 CAMBIO AQUÍ: La inserción en Supabase ha sido un éxito, disparamos Telegram sin retrasar la respuesta de la API
+    sendTelegramNotification(name, price).catch(err => 
+      console.error("Error asíncrono en Telegram:", err)
+    );
 
     return NextResponse.json({ data })
   } catch (err) {
