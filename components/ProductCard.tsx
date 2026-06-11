@@ -1,15 +1,17 @@
 'use client';
 
-import { ShoppingCart, Star } from 'lucide-react';
+import { ShoppingCart, Star, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 
 interface Product {
   id: number;
   name: string;
   price: number;
-  image: string;
+  image?: string;
   rating: number;
   category: string;
+  type: 'own' | 'dropshipping';
+  affiliateLink?: string;
 }
 
 interface ProductCardProps {
@@ -18,6 +20,12 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
+  const handleAffiliateClick = () => {
+    if (product.affiliateLink) {
+      window.open(product.affiliateLink, '_blank');
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden">
       {/* Image Container */}
@@ -30,7 +38,12 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       {/* Content */}
       <div className="p-4">
         <div className="mb-2">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">{product.category}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-500 uppercase tracking-wide">{product.category}</p>
+            {product.type === 'dropshipping' && (
+              <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">Afiliado</span>
+            )}
+          </div>
           <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
         </div>
 
@@ -48,17 +61,27 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
         {/* Price */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-2xl font-bold text-gray-900">${product.price}</span>
+          <span className="text-2xl font-bold text-gray-900">€{product.price}</span>
         </div>
 
         {/* Button */}
-        <button
-          onClick={() => onAddToCart(product.id)}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2 font-medium"
-        >
-          <ShoppingCart size={18} />
-          <span>Agregar</span>
-        </button>
+        {product.type === 'own' ? (
+          <button
+            onClick={() => onAddToCart(product.id)}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition flex items-center justify-center space-x-2 font-medium"
+          >
+            <ShoppingCart size={18} />
+            <span>Agregar</span>
+          </button>
+        ) : (
+          <button
+            onClick={handleAffiliateClick}
+            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition flex items-center justify-center space-x-2 font-medium"
+          >
+            <ExternalLink size={18} />
+            <span>+ Información</span>
+          </button>
+        )}
       </div>
     </div>
   );
