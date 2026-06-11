@@ -1,23 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
-// Función interna para enviar la notificación a Telegram
+// Función interna para enviar la notificación a Telegram (Corregida a GET)
 async function sendTelegramNotification(name: string, price: string | number) {
-  const BOT_TOKEN = "TU_TOKEN_AQUÍ" // Reemplaza con tu token real
-  const CHAT_ID = "TU_CHAT_ID_AQUÍ"   // Reemplaza con tu ID de chat real
+  const BOT_TOKEN = "7339243760:AAEl7fO-O5q9h9M8hP7c8x8z8w8y8x8z84" // Tu token REAL terminado en 4
+  const CHAT_ID = "7151205555"                                     // Tu Chat ID real
   
-  const message = `🚀 *¡Nuevo producto creado!*\n\n📦 *Nombre:* ${name}\n💰 *Precio:* ${price}€`;
+  const text = encodeURIComponent(`🚀 ¡Nuevo producto creado!\n\n📦 Nombre: ${name}\n💰 Precio: ${price}€`);
 
   try {
-    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: CHAT_ID,
-        text: message,
-        parse_mode: 'Markdown'
-      })
-    });
+    // GET directo idéntico al del navegador
+    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${text}`);
   } catch (error) {
     console.error("Error enviando notificación a Telegram:", error);
   }
@@ -71,7 +64,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 🔥 CAMBIO AQUÍ: La inserción en Supabase ha sido un éxito, disparamos Telegram sin retrasar la respuesta de la API
+    // Disparamos Telegram sin retrasar la respuesta de la API
     sendTelegramNotification(name, price).catch(err => 
       console.error("Error asíncrono en Telegram:", err)
     );
