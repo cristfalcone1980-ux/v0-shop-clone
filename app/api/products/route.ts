@@ -116,3 +116,8 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+await fetch(`${process.env.NEXT_PUBLIC_URL}/api/telegram`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(pedido)
+});
