@@ -24,3 +24,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
+// Cambia esto:
+const response = await fetch(`${request.nextUrl.origin}/api/simup`, {
+
+// Por esto:
+const response = await fetch(`${request.nextUrl.origin}/api/sumup`, {
