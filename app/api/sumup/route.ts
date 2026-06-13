@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     });
 
     const data = await response.json();
-    console.log('SumUp response:', JSON.stringify(data));
+    console.error('SumUp error:', JSON.stringify(data));
 
     if (data.id) {
       return NextResponse.json({
