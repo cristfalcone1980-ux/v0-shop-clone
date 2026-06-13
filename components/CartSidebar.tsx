@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 interface Product {
   id: number;
@@ -24,10 +25,19 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ items, products, onRemove, onUpdateQuantity, onClose }: CartSidebarProps) {
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'cart' | 'shipping'>('cart');
-  const [shipping, setShipping] = useState({
-    name: '', email: '', phone: '', address: '', city: '', zip: '',
-  });
+  const [step, setStep] = useState<'cart' | 'shipping' | 'payment'>('cart');
+  const [shipping, setShipping] = useState({ name: '', email: '', phone: '', address: '', city: '', zip: '' });
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState<any>(null);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const loadPaymentMethods = async () => {
+      const { data } = await supabase.from('payment_methods').select('*').eq('enabled', true);
+      if (data) setPaymentMethods(data);
+    };
+    loadPaymentMethods();
+  }, []);
 
   const cartProducts = items.map((item) => ({
     ...products.find((p) => p.id === item.id)!,
@@ -36,26 +46,29 @@ export default function CartSidebar({ items, products, onRemove, onUpdateQuantit
 
   const total = cartProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
 
-  const handleCheckout = async () => {
+  const handlePayment = async () => {
+    if (!selectedMethod) return;
     setLoading(true);
+
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount: total,
-          currency: 'EUR',
-          description: 'Pedido Dropbay',
-          shipping,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        alert('Error al procesar el pago');
+      if (selectedMethod.type === 'sumup') {
+        const response = await fetch('/api/sumup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount: total, currency: 'EUR', description: 'Pedido Dropbay' }),
+        });
+        const data = await response.json();
+        if (data.success && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+        } else {
+          alert('Error al procesar el pago con SumUp');
+        }
+      } else if (selectedMethod.type === 'paypal') {
+        window.location.href = selectedMethod.value.startsWith('http') ? selectedMethod.value : `https://paypal.me/${selectedMethod.value}/${total}`;
+      } else if (selectedMethod.type === 'bizum') {
+        alert(`Realiza el pago de ${total.toFixed(2)}€ por Bizum al número: ${selectedMethod.value}`);
+      } else if (selectedMethod.type === 'bank_transfer') {
+        alert(`Realiza la transferencia de ${total.toFixed(2)}€ al IBAN: ${selectedMethod.value}`);
       }
     } catch (error) {
       alert('Error de conexión');
@@ -67,7 +80,9 @@ export default function CartSidebar({ items, products, onRemove, onUpdateQuantit
   return (
     <div style={{background:'#111',color:'white',borderRadius:'12px',padding:'24px'}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'24px'}}>
-        <h2 style={{margin:0,fontSize:'24px'}}>{step === 'cart' ? 'Carrito' : 'Datos de envío'}</h2>
+        <h2 style={{margin:0,fontSize:'24px'}}>
+          {step === 'cart' ? 'Carrito' : step === 'shipping' ? 'Datos de envío' : 'Método de pago'}
+        </h2>
         <button onClick={onClose} style={{background:'none',border:'none',color:'#9ca3af',fontSize:'20px',cursor:'pointer'}}>✕</button>
       </div>
 
@@ -103,24 +118,45 @@ export default function CartSidebar({ items, products, onRemove, onUpdateQuantit
             {field:'city',placeholder:'Ciudad'},
             {field:'zip',placeholder:'Código postal'},
           ].map(({field, placeholder}) => (
-            <input
-              key={field}
-              type="text"
-              placeholder={placeholder}
+            <input key={field} type="text" placeholder={placeholder}
               value={shipping[field as keyof typeof shipping]}
               onChange={(e) => setShipping({...shipping, [field]: e.target.value})}
-              style={{width:'100%',marginBottom:'12px',padding:'12px 16px',background:'#1f1f1f',border:'none',color:'white',borderRadius:'8px',fontSize:'16px',boxSizing:'border-box'}}
-            />
+              style={{width:'100%',marginBottom:'12px',padding:'12px 16px',background:'#1f1f1f',border:'none',color:'white',borderRadius:'8px',fontSize:'16px',boxSizing:'border-box'}} />
           ))}
           <div style={{display:'flex',justifyContent:'space-between',margin:'16px 0'}}>
             <span style={{fontWeight:'bold',fontSize:'18px'}}>Total:</span>
             <span style={{color:'#f97316',fontWeight:'bold',fontSize:'24px'}}>{total.toFixed(2)}€</span>
           </div>
-          <button onClick={handleCheckout} disabled={loading} style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'16px',borderRadius:'999px',fontWeight:'bold',fontSize:'18px',cursor:'pointer',opacity:loading?0.5:1}}>
-            {loading ? 'Procesando...' : 'Pagar con SumUp'}
+          <button onClick={() => setStep('payment')} style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'16px',borderRadius:'999px',fontWeight:'bold',fontSize:'18px',cursor:'pointer'}}>
+            Continuar
           </button>
           <button onClick={() => setStep('cart')} style={{width:'100%',marginTop:'12px',background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:'14px'}}>
             ← Volver al carrito
+          </button>
+        </>
+      )}
+
+      {step === 'payment' && (
+        <>
+          <p style={{color:'#9ca3af',marginBottom:'16px'}}>Elige cómo pagar:</p>
+          {paymentMethods.map((method) => (
+            <div key={method.id} onClick={() => setSelectedMethod(method)}
+              style={{padding:'16px',marginBottom:'12px',borderRadius:'12px',border:`2px solid ${selectedMethod?.id === method.id ? '#f97316' : '#333'}`,cursor:'pointer',background:selectedMethod?.id === method.id ? 'rgba(249,115,22,0.1)' : '#1f1f1f'}}>
+              <p style={{margin:0,fontWeight:'500'}}>
+                {method.type === 'paypal' ? '💳 PayPal' : method.type === 'bizum' ? '📱 Bizum' : method.type === 'bank_transfer' ? '🏦 Transferencia' : '💰 SumUp'}
+              </p>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',margin:'16px 0'}}>
+            <span style={{fontWeight:'bold',fontSize:'18px'}}>Total:</span>
+            <span style={{color:'#f97316',fontWeight:'bold',fontSize:'24px'}}>{total.toFixed(2)}€</span>
+          </div>
+          <button onClick={handlePayment} disabled={!selectedMethod || loading}
+            style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'16px',borderRadius:'999px',fontWeight:'bold',fontSize:'18px',cursor:'pointer',opacity:(!selectedMethod || loading) ? 0.5 : 1}}>
+            {loading ? 'Procesando...' : 'Pagar'}
+          </button>
+          <button onClick={() => setStep('shipping')} style={{width:'100%',marginTop:'12px',background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:'14px'}}>
+            ← Volver
           </button>
         </>
       )}
