@@ -5,23 +5,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { amount, currency = 'EUR', description } = body;
 
-    const tokenResponse = await fetch('https://api.sumup.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        grant_type: 'client_credentials',
-        client_id: process.env.NEXT_PUBLIC_SUMUP_API_KEY!,
-        client_secret: process.env.SUMUP_SECRET_KEY!,
-      }),
-    });
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    const checkoutResponse = await fetch('https://api.sumup.com/v0.1/checkouts', {
+    const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${process.env.SUMUP_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -29,16 +16,18 @@ export async function POST(request: NextRequest) {
         amount,
         currency,
         description,
+        merchant_code: 'MT0E3WXG',
         return_url: `${request.nextUrl.origin}/payment/success`,
       }),
     });
 
-    const data = await checkoutResponse.json();
+    const data = await response.json();
+    console.log('SumUp response:', JSON.stringify(data));
 
     if (data.id) {
       return NextResponse.json({
         success: true,
-        checkoutUrl: `https://pay.sumup.com/b2c/DROPBAY/${data.id}`,
+        checkoutUrl: `https://pay.sumup.com/b2c/MT0E3WXG/${data.id}`,
       });
     }
 
