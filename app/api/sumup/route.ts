@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (data.id) {
       return NextResponse.json({
         success: true,
-        checkoutUrl: `https://pay.sumup.com/b2c/MT0E3WXG/${data.id}`,
+        checkoutUrl: `https://pay.sumup.com/b2c/chekout/${data.id}`,
       });
     }
 
