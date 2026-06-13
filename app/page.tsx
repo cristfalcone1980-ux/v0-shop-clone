@@ -49,38 +49,4 @@ export default function Home() {
     if (quantity <= 0) {
       removeFromCart(productId);
     } else {
-      setCartItems((prev) =>
-        prev.map((item) =>
-          item.id === productId ? { ...item, quantity } : item
-        )
-      );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-background">
-      <Header cartCount={cartItems.length} onCartClick={() => setShowCart(!showCart)} />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {showCart ? (
-          <CartSidebar
-            items={cartItems}
-            products={products}
-            onRemove={removeFromCart}
-            onUpdateQuantity={updateQuantity}
-            onClose={() => setShowCart(false)}
-          />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))}
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
+      setCartItems((
