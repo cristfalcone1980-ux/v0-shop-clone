@@ -59,70 +59,47 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="bg-black border-b border-gray-800 sticky top-0 z-40 px-4 py-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Drop<span className="text-orange-500">bay</span></h1>
-        <button onClick={() => setShowCart(!showCart)} className="relative bg-gray-800 p-3 rounded-full">
+    <div style={{minHeight:'100vh',background:'#0a0a0a',color:'white',fontFamily:'sans-serif'}}>
+      <header style={{background:'#111',borderBottom:'1px solid #222',padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:40}}>
+        <h1 style={{fontSize:'24px',fontWeight:'bold',margin:0}}>Drop<span style={{color:'#f97316'}}>bay</span></h1>
+        <button onClick={() => setShowCart(!showCart)} style={{background:'#222',border:'none',color:'white',padding:'12px',borderRadius:'50%',cursor:'pointer',position:'relative',fontSize:'18px'}}>
           🛒
           {cartItems.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-              {cartItems.length}
-            </span>
+            <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#f97316',color:'white',fontSize:'11px',borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center'}}>{cartItems.length}</span>
           )}
         </button>
       </header>
 
       {showCart ? (
-        <div className="max-w-md mx-auto px-4 py-8">
-          <CartSidebar
-            items={cartItems}
-            products={products}
-            onRemove={removeFromCart}
-            onUpdateQuantity={updateQuantity}
-            onClose={() => setShowCart(false)}
-          />
+        <div style={{maxWidth:'500px',margin:'0 auto',padding:'32px 16px'}}>
+          <CartSidebar items={cartItems} products={products} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClose={() => setShowCart(false)} />
         </div>
       ) : (
         <>
-          {/* Hero */}
-          <div className="bg-gradient-to-b from-gray-900 to-black px-6 py-16">
-            <span className="bg-orange-500/20 text-orange-500 text-xs font-bold px-3 py-1 rounded-full">TECNOLOGÍA & MÁS</span>
-            <h2 className="text-5xl font-black mt-4 mb-2">Los mejores<br />productos,<br /><span className="text-orange-500">al mejor<br />precio</span></h2>
-            <p className="text-gray-400 mt-4 mb-8">Descubre nuestra selección de tecnología, gadgets y mucho más.</p>
-            <input
-              type="text"
-              placeholder="Buscar productos..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-gray-800 text-white px-4 py-3 rounded-full focus:outline-none focus:ring-2 focus:ring-orange-500"
-            />
+          <div style={{background:'linear-gradient(to bottom, #1a0a00, #0a0a0a)',padding:'64px 24px'}}>
+            <span style={{background:'rgba(249,115,22,0.2)',color:'#f97316',fontSize:'12px',fontWeight:'bold',padding:'4px 12px',borderRadius:'999px'}}>TECNOLOGÍA & MÁS</span>
+            <h2 style={{fontSize:'48px',fontWeight:'900',margin:'16px 0 8px',lineHeight:1.1}}>Los mejores<br/>productos,<br/><span style={{color:'#f97316'}}>al mejor<br/>precio</span></h2>
+            <p style={{color:'#9ca3af',margin:'16px 0 32px'}}>Descubre nuestra selección de tecnología, gadgets y mucho más.</p>
+            <input type="text" placeholder="Buscar productos..." value={search} onChange={(e) => setSearch(e.target.value)} style={{width:'100%',background:'#1f1f1f',border:'none',color:'white',padding:'12px 16px',borderRadius:'999px',fontSize:'16px',outline:'none',boxSizing:'border-box'}} />
           </div>
 
-          {/* Productos */}
-          <div className="px-4 py-8">
-            <h3 className="text-xl font-bold mb-6">Productos destacados <span className="text-gray-400 text-sm font-normal">{filtered.length} productos</span></h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div style={{padding:'32px 16px'}}>
+            <h3 style={{fontSize:'20px',fontWeight:'bold',marginBottom:'24px'}}>Productos destacados <span style={{color:'#6b7280',fontSize:'14px',fontWeight:'normal'}}>{filtered.length} productos</span></h3>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:'24px'}}>
               {filtered.map((product) => (
-                <div key={product.id} className="bg-gray-900 rounded-xl overflow-hidden border border-gray-800 hover:border-orange-500 transition-colors">
+                <div key={product.id} style={{background:'#111',borderRadius:'12px',overflow:'hidden',border:'1px solid #222'}}>
                   {product.image_url ? (
-                    <img src={product.image_url} alt={product.name} className="w-full h-48 object-cover" />
+                    <img src={product.image_url} alt={product.name} style={{width:'100%',height:'200px',objectFit:'cover'}} />
                   ) : (
-                    <div className="w-full h-48 bg-gray-800 flex items-center justify-center text-4xl">📦</div>
+                    <div style={{width:'100%',height:'200px',background:'#1f1f1f',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'48px'}}>📦</div>
                   )}
-                  <div className="p-4">
-                    <h4 className="text-white font-medium mb-2">{product.name}</h4>
-                    <p className="text-orange-500 font-bold text-lg mb-4">{product.price}€</p>
+                  <div style={{padding:'16px'}}>
+                    <h4 style={{margin:'0 0 8px',fontWeight:'500'}}>{product.name}</h4>
+                    <p style={{color:'#f97316',fontWeight:'bold',fontSize:'20px',margin:'0 0 16px'}}>{product.price}€</p>
                     {product.product_type === 'dropshipping' && product.amazon_affiliate_link ? (
-                      <a href={product.amazon_affiliate_link} target="_blank" rel="noopener noreferrer"
-                        className="block w-full bg-orange-500 text-white py-2 rounded-lg text-center font-medium hover:bg-orange-600">
-                        + Información
-                      </a>
+                      <a href={product.amazon_affiliate_link} target="_blank" rel="noopener noreferrer" style={{display:'block',width:'100%',background:'#f97316',color:'white',padding:'10px',borderRadius:'8px',textAlign:'center',textDecoration:'none',fontWeight:'500',boxSizing:'border-box'}}>+ Información</a>
                     ) : (
-                      <button onClick={() => addToCart(product.id)}
-                        className="w-full bg-orange-500 text-white py-2 rounded-lg font-medium hover:bg-orange-600">
-                        Añadir al carrito
-                      </button>
+                      <button onClick={() => addToCart(product.id)} style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'10px',borderRadius:'8px',cursor:'pointer',fontWeight:'500',fontSize:'16px'}}>Añadir al carrito</button>
                     )}
                   </div>
                 </div>
