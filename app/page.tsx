@@ -62,12 +62,15 @@ export default function Home() {
     <div style={{minHeight:'100vh',background:'#0a0a0a',color:'white',fontFamily:'sans-serif'}}>
       <header style={{background:'#111',borderBottom:'1px solid #222',padding:'16px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:40}}>
         <h1 style={{fontSize:'24px',fontWeight:'bold',margin:0}}>Drop<span style={{color:'#f97316'}}>bay</span></h1>
-        <button onClick={() => setShowCart(!showCart)} style={{background:'#222',border:'none',color:'white',padding:'12px',borderRadius:'50%',cursor:'pointer',position:'relative',fontSize:'18px'}}>
-          🛒
-          {cartItems.length > 0 && (
-            <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#f97316',color:'white',fontSize:'11px',borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center'}}>{cartItems.length}</span>
-          )}
-        </button>
+        <div style={{display:'flex',gap:'12px',alignItems:'center'}}>
+          <a href="/dashboard" style={{background:'#222',border:'1px solid #333',color:'white',padding:'8px 16px',borderRadius:'999px',textDecoration:'none',fontSize:'14px',fontWeight:'500'}}>Admin</a>
+          <button onClick={() => setShowCart(!showCart)} style={{background:'#222',border:'none',color:'white',padding:'12px',borderRadius:'50%',cursor:'pointer',position:'relative',fontSize:'18px'}}>
+            🛒
+            {cartItems.length > 0 && (
+              <span style={{position:'absolute',top:'-4px',right:'-4px',background:'#f97316',color:'white',fontSize:'11px',borderRadius:'50%',width:'20px',height:'20px',display:'flex',alignItems:'center',justifyContent:'center'}}>{cartItems.length}</span>
+            )}
+          </button>
+        </div>
       </header>
 
       {showCart ? (
