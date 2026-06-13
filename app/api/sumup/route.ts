@@ -17,14 +17,14 @@ export async function POST(request: NextRequest) {
         currency,
         description,
         merchant_code: 'MT0E3WXG',
-        return_url: `${request.nextUrl.origin}/payment/success`,
+        redirect_url: `${request.nextUrl.origin}/payment/success`,
       }),
     });
 
     const data = await response.json();
     console.error('SumUp response:', JSON.stringify(data));
 
-    if (data.id) {
+    if (data.id && data.redirect_url) {
       return NextResponse.json({
         success: true,
         checkoutUrl: data.redirect_url,
