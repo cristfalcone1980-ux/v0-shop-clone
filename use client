@@ -1,0 +1,44 @@
+"use client";
+
+import { useState } from "react";
+import { verificarApiKey } from "./actions"; // Asegúrate de que la ruta del archivo sea correcta
+
+export default function PaginaPruebaSumUp() {
+  const [estado, setEstado] = useState<string>("");
+  const [cargando, setCargando] = useState<boolean>(false);
+
+  const comprobarLlave = async () => {
+    setCargando(true);
+    setEstado("Leyendo en el servidor...");
+    
+    try {
+      const resultado = await verificarApiKey();
+      setEstado(resultado.message);
+    } catch (error) {
+      setEstado("Error al intentar conectar con el servidor.");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-sm mx-auto border rounded-xl shadow-md space-y-4 bg-white">
+      <h2 className="text-xl font-bold text-gray-800">Prueba de Configuración SumUp</h2>
+      <p className="text-sm text-gray-500">
+        Haz clic abajo para leer la variable de entorno. El valor se mostrará en los logs de v0, no aquí.
+      </p>
+      
+      <button
+        onClick={comprobarLlave}
+        disabled={cargando}
+        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg disabled:bg-gray-400"
+      >
+        {cargando ? "Comprobando..." : "Verificar API Key"}
+      </button>
+
+      {estado && (
+        <p className="text-sm font-semibold text-center mt-2 text-blue-600">{estado}</p>
+      )}
+    </div>
+  );
+}
