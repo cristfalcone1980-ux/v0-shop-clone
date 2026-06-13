@@ -6,7 +6,7 @@ interface Product {
   id: number;
   name: string;
   price: number;
-  image?: string;
+  image_url?: string;
 }
 
 interface CartItem {
@@ -24,6 +24,10 @@ interface CartSidebarProps {
 
 export default function CartSidebar({ items, products, onRemove, onUpdateQuantity, onClose }: CartSidebarProps) {
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<'cart' | 'shipping'>('cart');
+  const [shipping, setShipping] = useState({
+    name: '', email: '', phone: '', address: '', city: '', zip: '',
+  });
 
   const cartProducts = items.map((item) => ({
     ...products.find((p) => p.id === item.id)!,
@@ -42,6 +46,7 @@ export default function CartSidebar({ items, products, onRemove, onUpdateQuantit
           amount: total,
           currency: 'EUR',
           description: 'Pedido Dropbay',
+          shipping,
         }),
       });
 
@@ -60,35 +65,65 @@ export default function CartSidebar({ items, products, onRemove, onUpdateQuantit
   };
 
   return (
-    <div className="bg-black text-white rounded-lg p-6 max-w-md mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Carrito</h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
+    <div style={{background:'#111',color:'white',borderRadius:'12px',padding:'24px'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'24px'}}>
+        <h2 style={{margin:0,fontSize:'24px'}}>{step === 'cart' ? 'Carrito' : 'Datos de envío'}</h2>
+        <button onClick={onClose} style={{background:'none',border:'none',color:'#9ca3af',fontSize:'20px',cursor:'pointer'}}>✕</button>
       </div>
 
-      {cartProducts.map((product) => (
-        <div key={product.id} className="flex items-center gap-4 mb-4 border-b border-gray-700 pb-4">
-          {product.image && <img src={product.image} alt={product.name} className="w-16 h-16 object-cover rounded" />}
-          <div className="flex-1">
-            <p className="font-medium">{product.name}</p>
-            <p className="text-orange-500">{product.price}€ x {product.quantity}</p>
+      {step === 'cart' && (
+        <>
+          {cartProducts.map((product) => (
+            <div key={product.id} style={{display:'flex',alignItems:'center',gap:'16px',marginBottom:'16px',borderBottom:'1px solid #222',paddingBottom:'16px'}}>
+              {product.image_url && <img src={product.image_url} alt={product.name} style={{width:'64px',height:'64px',objectFit:'cover',borderRadius:'8px'}} />}
+              <div style={{flex:1}}>
+                <p style={{margin:0,fontWeight:'500'}}>{product.name}</p>
+                <p style={{margin:0,color:'#f97316'}}>{product.price}€ x {product.quantity}</p>
+              </div>
+              <button onClick={() => onRemove(product.id)} style={{background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:'18px'}}>✕</button>
+            </div>
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:'24px',marginBottom:'24px'}}>
+            <span style={{fontWeight:'bold',fontSize:'18px'}}>Total:</span>
+            <span style={{color:'#f97316',fontWeight:'bold',fontSize:'24px'}}>{total.toFixed(2)}€</span>
           </div>
-          <button onClick={() => onRemove(product.id)} className="text-gray-400 hover:text-white">✕</button>
-        </div>
-      ))}
+          <button onClick={() => setStep('shipping')} style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'16px',borderRadius:'999px',fontWeight:'bold',fontSize:'18px',cursor:'pointer'}}>
+            Continuar
+          </button>
+        </>
+      )}
 
-      <div className="flex justify-between items-center mt-6 mb-6">
-        <span className="font-bold text-lg">Total:</span>
-        <span className="text-orange-500 text-2xl font-bold">{total.toFixed(2)}€</span>
-      </div>
-
-      <button
-        onClick={handleCheckout}
-        disabled={loading}
-        className="w-full bg-orange-500 text-white py-4 rounded-full font-bold text-lg hover:bg-orange-600 disabled:opacity-50"
-      >
-        {loading ? 'Procesando...' : 'Finalizar compra'}
-      </button>
+      {step === 'shipping' && (
+        <>
+          {[
+            {field:'name',placeholder:'Nombre completo'},
+            {field:'email',placeholder:'Email'},
+            {field:'phone',placeholder:'Teléfono'},
+            {field:'address',placeholder:'Dirección'},
+            {field:'city',placeholder:'Ciudad'},
+            {field:'zip',placeholder:'Código postal'},
+          ].map(({field, placeholder}) => (
+            <input
+              key={field}
+              type="text"
+              placeholder={placeholder}
+              value={shipping[field as keyof typeof shipping]}
+              onChange={(e) => setShipping({...shipping, [field]: e.target.value})}
+              style={{width:'100%',marginBottom:'12px',padding:'12px 16px',background:'#1f1f1f',border:'none',color:'white',borderRadius:'8px',fontSize:'16px',boxSizing:'border-box'}}
+            />
+          ))}
+          <div style={{display:'flex',justifyContent:'space-between',margin:'16px 0'}}>
+            <span style={{fontWeight:'bold',fontSize:'18px'}}>Total:</span>
+            <span style={{color:'#f97316',fontWeight:'bold',fontSize:'24px'}}>{total.toFixed(2)}€</span>
+          </div>
+          <button onClick={handleCheckout} disabled={loading} style={{width:'100%',background:'#f97316',color:'white',border:'none',padding:'16px',borderRadius:'999px',fontWeight:'bold',fontSize:'18px',cursor:'pointer',opacity:loading?0.5:1}}>
+            {loading ? 'Procesando...' : 'Pagar con SumUp'}
+          </button>
+          <button onClick={() => setStep('cart')} style={{width:'100%',marginTop:'12px',background:'none',border:'none',color:'#9ca3af',cursor:'pointer',fontSize:'14px'}}>
+            ← Volver al carrito
+          </button>
+        </>
+      )}
     </div>
   );
 }
