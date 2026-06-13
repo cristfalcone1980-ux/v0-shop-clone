@@ -1,14 +1,33 @@
 'use client';
 
-import { useState } from 'react';
-import ProductCard from '@/components/ProductCard';
-import CartSidebar from '@/components/CartSidebar';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import Header from '@/components/Header';
-import { products } from '@/lib/products';
+import CartSidebar from '@/components/CartSidebar';
+import ProductCard from '@/components/ProductCard';
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  image_url?: string;
+  product_type?: string;
+  amazon_affiliate_link?: string;
+}
 
 export default function Home() {
+  const [products, setProducts] = useState<Product[]>([]);
   const [cartItems, setCartItems] = useState<Array<{ id: number; quantity: number }>>([]);
   const [showCart, setShowCart] = useState(false);
+  const supabase = createClient();
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const { data } = await supabase.from('products').select('*');
+      if (data) setProducts(data);
+    };
+    loadProducts();
+  }, []);
 
   const addToCart = (productId: number) => {
     setCartItems((prev) => {
@@ -39,10 +58,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Header cartCount={cartItems.length} onCartClick={() => setShowCart(!showCart)} />
-      
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         {showCart ? (
           <CartSidebar
             items={cartItems}
@@ -52,20 +70,15 @@ export default function Home() {
             onClose={() => setShowCart(false)}
           />
         ) : (
-          <>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Bienvenido a V0 Shop</h1>
-            <p className="text-gray-600 mb-8">Descubre nuestros productos exclusivos</p>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={addToCart}
-                />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={addToCart}
+              />
+            ))}
+          </div>
         )}
       </main>
     </div>
