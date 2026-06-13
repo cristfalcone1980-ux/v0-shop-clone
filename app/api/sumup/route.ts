@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { amount, currency = 'EUR', description } = body;
 
-    const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
+   const response = await fetch('https://api.sumup.com/v0.1/checkouts', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.SUMUP_SECRET_KEY}`,
