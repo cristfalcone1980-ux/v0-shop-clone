@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     console.error('SumUp response:', JSON.stringify(data));
 
-    if (data.id && data.redirect_url) {
+    if (data.id) {
       return NextResponse.json({
         success: true,
-        checkoutUrl: data.redirect_url,
+        checkoutUrl: `https://pay.sumup.com/b2c/q/${data.id}`,
       });
     }
 
